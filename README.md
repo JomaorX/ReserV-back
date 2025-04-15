@@ -38,7 +38,7 @@ El proyecto sigue una estructura modular para facilitar su mantenimiento:
 
 1. Clona el repositorio:
 
-git clone https://github.com/tu-usuario/reserv-backend.git  
+git clone https://github.com/JomaorX/ReserV-back.git  
 cd reserv-backend
 
 2. Instala las dependencias:
