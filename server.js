@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 // Endpoint para registro
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     // Verificar si el usuario ya existe
     const userExists = await User.findOne({ where: { email } });
@@ -38,7 +38,7 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Crear un nuevo usuario
-    const newUser = await User.create({ name, email, password: hashedPassword });
+    const newUser = await User.create({ name, email, password: hashedPassword, role });
 
     // Respuesta exitosa
     res.status(201).json({ message: 'Usuario registrado exitosamente.', user: newUser });
@@ -67,7 +67,7 @@ app.post('/api/login', async (req, res) => {
 
     // Generar un token JWT
     const token = jwt.sign(
-      { userId: user.id, email: user.email }, // Incluye el userId en el token
+      { userId: user.id, email: user.email, role: user.role }, // Incluye el userId en el token
       JWT_SECRET,
       { expiresIn: '1h' }
     );

@@ -1,24 +1,28 @@
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
 
-// Middleware para verificar el token JWT
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Extraer el token del encabezado
-
+  const token = authHeader && authHeader.split(' ')[1];
   if (!token) {
     return res.status(401).json({ message: 'Acceso denegado. Token no proporcionado.' });
   }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'mysecretkey', (err, decodedUser) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
       console.error('Error al verificar el token:', err);
       return res.status(403).json({ message: 'Token inválido o expirado.' });
     }
-    console.log('Usuario decodificado:', decodedUser); // Verifica qué contiene decodedUser
-    req.user = decodedUser; // Adjuntar el usuario decodificado a la solicitud
+    console.log('Usuario decodificado del token:', user);
+    req.user = user; // Adjuntar el usuario decodificado a la solicitud
     next();
   });
 };
 
-module.exports = authenticateToken;
+// Middleware para verificar si el usuario es administrador
+const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Acceso denegado. Requiere rol de administrador.' });
+  }
+  next();
+};
+
+module.exports = { authenticateToken, isAdmin };

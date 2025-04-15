@@ -1,15 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const Reservation = require('../models/Reservation');
-const authMiddleware = require('../middleware/auth'); // Middleware para verificar el token JWT
+const { authenticateToken } = require('../middleware/auth');
 const { sendConfirmationEmail } = require('../utils/email');
 const User = require('../models/User'); // Importa el modelo de usuario
 
 // Crear una nueva reserva
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
+
+    console.log('Datos recibidos en la solicitud:', req.body); // Log de los datos recibidos
+    console.log('Usuario autenticado:', req.user); // Log del usuario autenticado
+    
     const { salonId, barber, service, date, time } = req.body;
 
+    // Crear la reserva
     const reservation = await Reservation.create({
       userId: req.user.userId,
       salonId,
@@ -20,11 +25,11 @@ router.post('/', authMiddleware, async (req, res) => {
       status: 'pending',
     });
 
-  console.log('EMAIL_USER:', process.env.EMAIL_USER);
-  console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
-
     // Obtener el correo del usuario
     const user = await User.findByPk(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
 
     // Enviar correo de confirmación
     await sendConfirmationEmail(user.email, reservation);
@@ -32,14 +37,14 @@ router.post('/', authMiddleware, async (req, res) => {
     res.status(201).json({ message: 'Reserva creada exitosamente.', reservation });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al crear la reserva.', userId: `${req.user.id}` });
+    res.status(500).json({ message: 'Error al crear la reserva.' });
   }
 });
 
 // Obtener todas las reservas del usuario autenticado
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const userId = req.user.id; // Obtenido del middleware de autenticación
+    const userId = req.user.userId; // Obtenido del middleware de autenticación
     const reservations = await Reservation.findAll({ where: { userId } });
     res.status(200).json(reservations);
   } catch (error) {
@@ -49,7 +54,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Actualizar una reserva existente
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { barber, service, date, time } = req.body;
@@ -60,7 +65,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     // Verificar que la reserva pertenezca al usuario autenticado
-    if (reservation.userId !== req.user.id) {
+    if (reservation.userId !== req.user.userId) {
       return res.status(403).json({ message: 'No tienes permiso para modificar esta reserva.' });
     }
 
@@ -73,7 +78,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 });
 
 // Eliminar una reserva
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -83,7 +88,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     }
 
     // Verificar que la reserva pertenezca al usuario autenticado
-    if (reservation.userId !== req.user.id) {
+    if (reservation.userId !== req.user.userId) {
       return res.status(403).json({ message: 'No tienes permiso para eliminar esta reserva.' });
     }
 

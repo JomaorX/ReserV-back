@@ -30,6 +30,8 @@ const Reservation = sequelize.define('Reservation', {
     type: DataTypes.ENUM('pending', 'confirmed', 'cancelled'),
     defaultValue: 'pending',
   },
+}, {
+  timestamps: true,
 });
 
 module.exports = Reservation;

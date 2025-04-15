@@ -18,19 +18,25 @@ Backend de la plataforma **ReserV**, una aplicación para gestionar reservas de 
 
 El proyecto sigue una estructura modular para facilitar su mantenimiento:
 
-├── config/               # Configuración de la base de datos  
-│   └── database.js       # Conexión a MySQL usando Sequelize  
-├── models/               # Modelos de la base de datos  
-│   ├── User.js           # Modelo de usuario  
-│   └── Reservation.js    # Modelo de reservas  
-├── routes/               # Rutas de la API  
-│   └── reservation.js    # Endpoints relacionados con reservas  
-├── middleware/           # Middleware personalizado  
-│   └── auth.js           # Validación de tokens JWT  
-├── utils/                # Funciones auxiliares  
-│   └── email.js          # Configuración de Nodemailer  
-├── .env                  # Variables de entorno  
-└── server.js             # Archivo principal del servidor  
+ReserV-back/
+├── config/
+│   └── database.js          # Configuración de la conexión a la base de datos
+├── middleware/
+│   └── auth.js              # Middleware para verificar tokens JWT
+├── models/
+│   ├── User.js              # Modelo de usuario
+│   ├── Reservation.js       # Modelo de reservas
+│   ├── Employee.js          # Modelo de empleados
+│   ├── Service.js           # Modelo de servicios
+│   └── UnavailableDay.js    # Modelo de días no disponibles
+├── routes/
+│   ├── reservation.js       # Rutas relacionadas con reservas
+│   └── admin.js             # Rutas para el panel de administración
+├── utils/
+│   └── email.js             # Funciones para enviar correos electrónicos
+├── .env                     # Variables de entorno
+├── server.js                # Archivo principal del servidor
+└── package.json             # Dependencias y scripts del proyecto
 
 ---
 
