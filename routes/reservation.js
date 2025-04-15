@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Reservation = require('../models/Reservation');
 const authMiddleware = require('../middleware/auth'); // Middleware para verificar el token JWT
+const { sendConfirmationEmail } = require('../utils/email');
+const User = require('../models/User'); // Importa el modelo de usuario
 
 // Crear una nueva reserva
 router.post('/', authMiddleware, async (req, res) => {
@@ -17,6 +19,15 @@ router.post('/', authMiddleware, async (req, res) => {
       time,
       status: 'pending',
     });
+
+  console.log('EMAIL_USER:', process.env.EMAIL_USER);
+  console.log('EMAIL_PASSWORD:', process.env.EMAIL_PASSWORD);
+
+    // Obtener el correo del usuario
+    const user = await User.findByPk(req.user.userId);
+
+    // Enviar correo de confirmación
+    await sendConfirmationEmail(user.email, reservation);
 
     res.status(201).json({ message: 'Reserva creada exitosamente.', reservation });
   } catch (error) {
