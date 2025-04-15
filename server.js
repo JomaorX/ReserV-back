@@ -6,14 +6,16 @@ const bcrypt = require('bcryptjs');
 const cors = require('cors');
 require('dotenv').config();
 
+// Importaciones
+const sequelize = require('./config/database'); // Conexión a la base de datos
+const User = require('./models/User'); // Modelo de usuario
+const reservationRoutes = require('./routes/reservation'); // Rutas de reservas
+
 // Middleware
 app.use(cors()); // Habilita CORS para todas las rutas
 app.use(express.json());
 
-// Simulación de una base de datos
-let users = [];
-
-// Clave secreta para firmar el token JWT
+// Clave secreta para JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'mysecretkey';
 
 // Endpoint raíz
@@ -27,7 +29,7 @@ app.post('/api/register', async (req, res) => {
     const { name, email, password } = req.body;
 
     // Verificar si el usuario ya existe
-    const userExists = users.find((user) => user.email === email);
+    const userExists = await User.findOne({ where: { email } });
     if (userExists) {
       return res.status(400).json({ message: 'El correo electrónico ya está registrado.' });
     }
@@ -36,11 +38,10 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Crear un nuevo usuario
-    const newUser = { id: users.length + 1, name, email, password: hashedPassword };
-    users.push(newUser);
+    const newUser = await User.create({ name, email, password: hashedPassword });
 
     // Respuesta exitosa
-    res.status(201).json({ message: 'Usuario registrado exitosamente.' });
+    res.status(201).json({ message: 'Usuario registrado exitosamente.', user: newUser });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor.' });
@@ -53,7 +54,7 @@ app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
 
     // Buscar el usuario por correo electrónico
-    const user = users.find((user) => user.email === email);
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(400).json({ message: 'Credenciales incorrectas.' });
     }
@@ -65,10 +66,14 @@ app.post('/api/login', async (req, res) => {
     }
 
     // Generar un token JWT
-    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-
+    const token = jwt.sign(
+      { userId: user.id, email: user.email }, // Incluye el userId en el token
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
     // Respuesta exitosa
     res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
+    console.log('Este es el userId que se registra en el token',user.id)
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor.' });
@@ -98,7 +103,16 @@ app.get('/api/dashboard', authenticateToken, (req, res) => {
   res.json({ message: 'Bienvenido al dashboard', user: req.user });
 });
 
-// Iniciar el servidor
-app.listen(PORT, () => {
+// Rutas de reservas
+app.use('/api/reservations', reservationRoutes);
+
+// Sincronizar la base de datos y arrancar el servidor
+app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  try {
+    await sequelize.sync({ force: true }); // Sincroniza los modelos con la base de datos
+    console.log('Base de datos sincronizada.');
+  } catch (error) {
+    console.error('Error al sincronizar la base de datos:', error);
+  }
 });
