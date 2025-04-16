@@ -4,6 +4,7 @@ const { authenticateToken, isAdmin } = require('../middleware/auth');
 const Employee = require('../models/Employee');
 const UnavailableDay = require('../models/UnavailableDay');
 const Service = require('../models/Service');
+const Salon = require('../models/Salon');
 
 // Crear un nuevo empleado (solo para administradores)
 router.post('/employees', [authenticateToken, isAdmin], async (req, res) => {
@@ -153,6 +154,61 @@ router.delete('/services/:id', [authenticateToken, isAdmin], async (req, res) =>
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al eliminar el servicio.' });
+  }
+});
+
+// Crear un nuevo salón (solo para administradores)
+router.post('/', [authenticateToken, isAdmin], async (req, res) => {
+  try {
+    const { name, location, openingHours } = req.body;
+    const newSalon = await Salon.create({
+      ownerId: req.user.id, // Asocia el salón con el administrador autenticado
+      name,
+      location,
+      openingHours,
+    });
+    res.status(201).json({ message: 'Salón creado exitosamente.', salon: newSalon });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al crear el salón.' });
+  }
+});
+
+// Obtener el salón del administrador autenticado
+router.get('/me', [authenticateToken, isAdmin], async (req, res) => {
+  try {
+    const salon = await Salon.findOne({ where: { ownerId: req.user.id } });
+    if (!salon) {
+      return res.status(404).json({ message: 'Salón no encontrado.' });
+    }
+    res.status(200).json(salon);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener el salón.' });
+  }
+});
+
+// Actualizar un salón (solo para administradores)
+router.put('/:id', [authenticateToken, isAdmin], async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, location, openingHours } = req.body;
+
+    const salon = await Salon.findByPk(id);
+    if (!salon) {
+      return res.status(404).json({ message: 'Salón no encontrado.' });
+    }
+
+    // Verificar que el salón pertenezca al administrador autenticado
+    if (salon.ownerId !== req.user.id) {
+      return res.status(403).json({ message: 'No tienes permiso para modificar este salón.' });
+    }
+
+    await salon.update({ name, location, openingHours });
+    res.status(200).json({ message: 'Salón actualizado correctamente.', salon });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al actualizar el salón.' });
   }
 });
 
