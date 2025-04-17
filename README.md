@@ -29,6 +29,8 @@ ReserV-back/
 ├── middleware/
 │   └── auth.js              # Middleware para verificar tokens JWT
 ├── models/
+│   ├── Index.js             # Relaciones entre tablas
+│   ├── Salon.js             # Modelo de salon
 │   ├── User.js              # Modelo de usuario
 │   ├── Reservation.js       # Modelo de reservas
 │   ├── Employee.js          # Modelo de empleados
@@ -60,14 +62,20 @@ npm install
 
 Crea un archivo `.env` en la raíz del proyecto y define las siguientes variables:
 
-PORT=3000  
-JWT_SECRET=tu_clave_secreta  
-DB_HOST=localhost  
-DB_USER=tu_usuario  
-DB_PASSWORD=tu_contraseña  
-DB_NAME=reserv_db  
-EMAIL_USER=tu_correo@gmail.com  
-EMAIL_PASSWORD=tu_contraseña_o_app_password
+PORT=3000                        # Puerto en el que correrá el servidor
+JWT_SECRET=tu_clave_secreta     # Clave para firmar y verificar tokens JWT
+
+# Datos de la base de datos MySQL (por ejemplo desde Clever Cloud)
+MYSQL_ADDON_HOST=tu_host_db
+MYSQL_ADDON_DB=nombre_base_de_datos
+MYSQL_ADDON_USER=usuario_db
+MYSQL_ADDON_PORT=3306
+MYSQL_ADDON_PASSWORD=contraseña_db
+MYSQL_ADDON_URI=mysql://usuario:contraseña@host:puerto/base_de_datos
+
+# Credenciales de correo para notificaciones (usado con Nodemailer)
+EMAIL_USER=tu_correo_app@gmail.com
+EMAIL_PASSWORD=contraseña_app
 
 4. Sincroniza la base de datos:
 
