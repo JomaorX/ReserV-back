@@ -10,7 +10,7 @@ require('dotenv').config();
 const sequelize = require('./config/database'); // Conexión a la base de datos
 const User = require('./models/User'); // Modelo de usuario
 const reservationRoutes = require('./routes/reservation'); // Rutas de reservas
-
+const adminRoutes = require('./routes/admin');
 // Middleware
 app.use(cors()); // Habilita CORS para todas las rutas
 app.use(express.json());
@@ -105,7 +105,7 @@ app.get('/api/dashboard', authenticateToken, (req, res) => {
 
 // Rutas de reservas
 app.use('/api/reservations', reservationRoutes);
-
+app.use('/api', adminRoutes);
 // Sincronizar la base de datos y arrancar el servidor
 app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

@@ -18,8 +18,8 @@ router.post('/employees', [authenticateToken, isAdmin], async (req, res) => {
   }
 });
 
-// Obtener todos los empleados (solo para administradores)
-router.get('/employees', [authenticateToken, isAdmin], async (req, res) => {
+// Obtener todos los empleados (accesible para usuarios autenticados)
+router.get('/employees', [authenticateToken], async (req, res) => {
   try {
     const employees = await Employee.findAll();
     res.status(200).json(employees);
@@ -113,8 +113,8 @@ router.post('/services', [authenticateToken, isAdmin], async (req, res) => {
   }
 });
 
-// Obtener todos los servicios (solo para administradores)
-router.get('/services', [authenticateToken, isAdmin], async (req, res) => {
+// Obtener todos los servicios (accesible para usuarios autenticados)
+router.get('/services', [authenticateToken], async (req, res) => {
   try {
     const services = await Service.findAll();
     res.status(200).json(services);
@@ -158,11 +158,11 @@ router.delete('/services/:id', [authenticateToken, isAdmin], async (req, res) =>
 });
 
 // Crear un nuevo salón (solo para administradores)
-router.post('/', [authenticateToken, isAdmin], async (req, res) => {
+router.post('/salons', [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { name, location, openingHours } = req.body;
     const newSalon = await Salon.create({
-      ownerId: req.user.id, // Asocia el salón con el administrador autenticado
+      ownerId: req.user.userId, // Asocia el salón con el administrador autenticado
       name,
       location,
       openingHours,
@@ -174,10 +174,24 @@ router.post('/', [authenticateToken, isAdmin], async (req, res) => {
   }
 });
 
-// Obtener el salón del administrador autenticado
-router.get('/me', [authenticateToken, isAdmin], async (req, res) => {
+// Obtener todos los salones (accesible para usuarios autenticados)
+router.get('/salons', [authenticateToken], async (req, res) => {
   try {
-    const salon = await Salon.findOne({ where: { ownerId: req.user.id } });
+    const salons = await Salon.findAll();
+    if (!salons || salons.length === 0) {
+      return res.status(404).json({ message: 'No hay salones registrados.' });
+    }
+    res.status(200).json(salons);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener los salones.' });
+  }
+});
+
+// Obtener el salón del administrador autenticado
+router.get('/salons/me', [authenticateToken, isAdmin], async (req, res) => {
+  try {
+    const salon = await Salon.findOne({ where: { ownerId: req.user.userId } });
     if (!salon) {
       return res.status(404).json({ message: 'Salón no encontrado.' });
     }
@@ -189,7 +203,7 @@ router.get('/me', [authenticateToken, isAdmin], async (req, res) => {
 });
 
 // Actualizar un salón (solo para administradores)
-router.put('/:id', [authenticateToken, isAdmin], async (req, res) => {
+router.put('/salons/:id', [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { id } = req.params;
     const { name, location, openingHours } = req.body;
@@ -200,7 +214,7 @@ router.put('/:id', [authenticateToken, isAdmin], async (req, res) => {
     }
 
     // Verificar que el salón pertenezca al administrador autenticado
-    if (salon.ownerId !== req.user.id) {
+    if (salon.ownerId !== req.user.userId) {
       return res.status(403).json({ message: 'No tienes permiso para modificar este salón.' });
     }
 

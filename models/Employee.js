@@ -12,7 +12,7 @@ const Employee = sequelize.define('Employee', {
     unique: true,
   },
   role: {
-    type: DataTypes.ENUM('admin', 'stylist'), // Rol del empleado (administrador o peluquero)
+    type: DataTypes.ENUM('stylist', 'receptionist', 'manager', 'cleaner'), // Rol del empleado (administrador o peluquero)
     defaultValue: 'stylist',
   },
 }, {
