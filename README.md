@@ -1,5 +1,10 @@
 # 🚀 ReserV Backend
 
+<p align="center">
+<img src="https://raw.githubusercontent.com/JomaorX/ReserV-front/refs/heads/main/public/reserV-LogoM%20-%20mediano.png" alt="ReserV logo">
+</p>
+
+---
 Backend de la plataforma **ReserV**, una aplicación para gestionar reservas de peluquería online.
 
 ---
