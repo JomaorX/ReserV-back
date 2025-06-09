@@ -164,7 +164,10 @@ app.use('/api', adminRoutes);
 app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
   try {
-    await sequelize.sync({ force: true }); // SOLO EN DESARROLLO
+    await sequelize.sync({
+      alter: true, // Actualiza el esquema sin borrar datos // {force: true}, borra todo y la deja limpia
+      logging: console.log, // Opcional: Ver qué cambios hace
+    });
     console.log('Base de datos sincronizada.');
   } catch (error) {
     console.error('Error al sincronizar la base de datos:', error);
