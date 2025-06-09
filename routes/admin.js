@@ -7,25 +7,42 @@ const Service = require('../models/Service');
 const Salon = require('../models/Salon');
 
 // Crear un nuevo empleado (solo para administradores)
-router.post('/employees', [authenticateToken, isAdmin], async (req, res) => {
+router.post("/employees", [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { name, email, role } = req.body;
-    const employee = await Employee.create({ name, email, role });
-    res.status(201).json({ message: 'Empleado creado exitosamente.', employee });
+    const salonId = req.user.salonId; // 🔥 Obtener el ID del salón del administrador
+
+    if (!salonId) {
+      return res.status(403).json({ message: "No tienes un salón asignado." });
+    }
+
+    const employee = await Employee.create({ name, email, role, salonId }); // 🔥 Asociar al empleado con el salón
+
+    res
+      .status(201)
+      .json({ message: "Empleado creado exitosamente.", employee });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al crear el empleado.' });
+    res.status(500).json({ message: "Error al crear el empleado." });
   }
 });
 
 // Obtener todos los empleados (accesible para usuarios autenticados)
-router.get('/employees', [authenticateToken], async (req, res) => {
+router.get("/employees", [authenticateToken], async (req, res) => {
   try {
-    const employees = await Employee.findAll();
+    const { salonId } = req.query; // Obtener el ID del salón desde la URL
+
+    let employees;
+    if (salonId) {
+      employees = await Employee.findAll({ where: { salonId } });
+    } else {
+      employees = await Employee.findAll(); // Si no se pasa `salonId`, devuelve todos
+    }
+
     res.status(200).json(employees);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al obtener los empleados.' });
+    res.status(500).json({ message: "Error al obtener los empleados." });
   }
 });
 

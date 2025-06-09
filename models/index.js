@@ -1,8 +1,8 @@
 const User = require('./User');
-const Reservation = require('./Reservation');
+const Salon = require('./Salon');
 const Employee = require('./Employee');
 const Service = require('./Service');
-const Salon = require('./Salon');
+const Reservation = require('./Reservation');
 
 // Relaciones
 User.hasMany(Reservation, { foreignKey: 'userId' });

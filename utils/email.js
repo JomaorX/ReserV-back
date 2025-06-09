@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 const sendConfirmationEmail = async (to, reservation) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to,
+    to: 'reserv.platform@gmail.com', // Dirección fija para pruebas
     replyTo: process.env.EMAIL_USER,
     subject: 'Confirmación de Reserva',
     text: `Tu reserva ha sido creada exitosamente:\n\n` +

@@ -60,11 +60,17 @@ app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(400).json({ message: 'Credenciales incorrectas.' });
+    if (!user)
+      return res.status(400).json({ message: "Credenciales incorrectas." });
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Credenciales incorrectas.' });
-    const token = jwt.sign({ userId: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
-    res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
+    if (!isMatch)
+      return res.status(400).json({ message: "Credenciales incorrectas." });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role, salonId: user.salonId },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+    res.status(200).json({ message: "Inicio de sesión exitoso.", token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error en el servidor.' });
