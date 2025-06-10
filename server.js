@@ -104,15 +104,23 @@ app.get('/api/salons/me', authenticateToken, async (req, res) => {
 // ---------- LISTAR TODOS LOS SALONES (para clientes) ----------
 app.get('/api/salons', async (req, res) => {
   try {
-    const salones = await Salon.findAll({
-      attributes: ['id', 'name', 'openingHours', 'bannerUrl']
-    });
-    res.json(salones);
+    const { salonId } = req.query;
+    console.log("Salon recibido",salonId);
+    let salon;
+    if (salonId) {
+      salon = await Salon.findAll({ where: { id: salonId } });
+    }else {
+      salon = await Salon.findAll({
+        attributes: ['id', 'name', 'openingHours', 'bannerUrl']
+      });
+    }
+    res.json(salon);
   } catch (error) {
     console.error('Error al obtener los salones:', error);
     res.status(500).json({ message: 'Error al obtener los salones' });
   }
 });
+
 // ---------- OBTENER UN SALÓN POR ID ----------
 app.get('/api/salons/:id', async (req, res) => {
   try {
@@ -156,11 +164,9 @@ app.post('/api/salons', authenticateToken, async (req, res) => {
       JWT_SECRET,
       { expiresIn: "78h" }
     );
-    res.status(201).json({
-      message: "Salón creado con éxito",
-      salon: newSalon,
-      token: updatedToken, // 👈 lo enviamos al frontend
-    });
+    res
+      .status(201)
+      .json({ message: "Salón creado con éxito", salon: newSalon });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al crear el salón' });
@@ -170,36 +176,15 @@ app.post('/api/salons', authenticateToken, async (req, res) => {
 // ---------- ACTUALIZAR SALÓN ----------
 app.put('/api/salons/:id', authenticateToken, async (req, res) => {
   try {
-    const salon = await Salon.findOne({
-      where: { id: req.params.id, ownerId: req.user.userId },
-    });
-    if (!salon)
-      return res.status(404).json({ message: "Salón no encontrado." });
+    const salon = await Salon.findOne({ where: { id: req.params.id, ownerId: req.user.userId } });
+    if (!salon) return res.status(404).json({ message: 'Salón no encontrado.' });
     const { name, location, openingHours, bannerUrl } = req.body;
     await salon.update({ name, location, openingHours, bannerUrl });
     await User.update(
       { salonId: salon.id },
       { where: { id: req.user.userId } }
     );
-    // 🔁 Volver a buscar el usuario actualizado
-    const updatedUser = await User.findByPk(req.user.userId);
-
-    // 🆕 Generar nuevo token
-    const updatedToken = jwt.sign(
-      {
-        userId: updatedUser.id,
-        email: updatedUser.email,
-        role: updatedUser.role,
-        salonId: updatedUser.salonId,
-      },
-      JWT_SECRET,
-      { expiresIn: "78h" }
-    );
-    res.status(201).json({
-      message: "Salón creado con éxito",
-      salon: salon,
-      token: updatedToken, // 👈 lo enviamos al frontend
-    });
+    res.json({ message: 'Salón actualizado con éxito', salon });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al actualizar el salón' });
