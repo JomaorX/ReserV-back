@@ -2,10 +2,12 @@
 node_modules/
 npm-debug.log
 .env
-uploads
 # Ignorar archivos temporales de Nodemon
 .nodemon.pid
 
 # Ignorar archivos del sistema operativo
 .DS_Store
 Thumbs.db
+
+# Carpeta de Imagenes
+uploads/*
