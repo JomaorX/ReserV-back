@@ -11,7 +11,7 @@ const User = sequelize.define(
     role: { type: DataTypes.ENUM("client", "admin"), defaultValue: "client" },
     salonId: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Solo los administradores tendrán un salón
+      allowNull: true,
       references: { model: Salon, key: "id" },
     },
   },
@@ -21,6 +21,7 @@ const User = sequelize.define(
 );
 
 
-Salon.belongsTo(User, { foreignKey: 'ownerId' }); // Un salón pertenece a un administrador
-User.hasOne(Salon, { foreignKey: 'ownerId' }); // Un administrador tiene un salón
+User.belongsTo(Salon, { foreignKey: "salonId" });
+Salon.hasOne(User, { foreignKey: "salonId" });
+
 module.exports = User;

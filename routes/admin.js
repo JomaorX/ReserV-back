@@ -211,18 +211,39 @@ router.delete('/services/:id', [authenticateToken, isAdmin], async (req, res) =>
 router.post('/salons', [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { name, location, openingHours } = req.body;
+
+    console.log("🛠️ Creando nuevo salón para usuario:", req.user.userId);
+
     const newSalon = await Salon.create({
-      ownerId: req.user.userId, // Asocia el salón con el administrador autenticado
+      ownerId: req.user.userId,
       name,
       location,
       openingHours,
     });
+
+    console.log("✅ Salón creado con ID:", newSalon.id);
+
+    await User.update(
+      { salonId: newSalon.id },
+      { where: { id: req.user.userId }, individualHooks: true }
+    );
+
+    console.log("🔄 Usuario actualizado con nuevo salonId");
+
+    const updatedUser = await User.findByPk(req.user.userId);
+    console.log(
+      "🧾 Verificación - salonId del usuario en BD:",
+      updatedUser ? updatedUser.salonId : "Usuario no encontrado"
+    );
+
     res.status(201).json({ message: 'Salón creado exitosamente.', salon: newSalon });
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error al crear salón:", error);
     res.status(500).json({ message: 'Error al crear el salón.' });
   }
 });
+
 
 // Obtener todos los salones (accesible para usuarios autenticados)
 router.get('/salons', [authenticateToken], async (req, res) => {
@@ -254,26 +275,51 @@ router.get('/salons/me', [authenticateToken, isAdmin], async (req, res) => {
 
 // Actualizar un salón (solo para administradores)
 router.put('/salons/:id', [authenticateToken, isAdmin], async (req, res) => {
+  console.log("🚨 Se llamó a PUT /salons");
   try {
     const { id } = req.params;
     const { name, location, openingHours } = req.body;
 
+    console.log("🔍 Buscando salón con ID:", id);
+
     const salon = await Salon.findByPk(id);
     if (!salon) {
+      console.log("❌ Salón no encontrado");
       return res.status(404).json({ message: 'Salón no encontrado.' });
     }
 
-    // Verificar que el salón pertenezca al administrador autenticado
     if (salon.ownerId !== req.user.userId) {
+      console.log("⛔ Intento de modificación no autorizado por userId:", req.user.userId);
       return res.status(403).json({ message: 'No tienes permiso para modificar este salón.' });
     }
 
+    console.log("✏️ Actualizando salón con nuevos datos");
+
     await salon.update({ name, location, openingHours });
+
+    console.log(
+      "🔄 Actualizando salonId del usuario a:",
+      salon.id
+    );
+
+    await User.update(
+      { salonId: salon.id },
+      { where: { id: req.user.userId }, individualHooks: true }
+    );
+
+    const updatedUser = await User.findByPk(req.user.userId);
+    console.log(
+      "🧾 Verificación - salonId del usuario en BD:",
+      updatedUser ? updatedUser.salonId : "Usuario no encontrado"
+    );
+
     res.status(200).json({ message: 'Salón actualizado correctamente.', salon });
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error al actualizar salón:", error);
     res.status(500).json({ message: 'Error al actualizar el salón.' });
   }
 });
+
 
 module.exports = router;
