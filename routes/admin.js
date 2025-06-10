@@ -83,7 +83,16 @@ router.delete('/employees/:id', [authenticateToken, isAdmin], async (req, res) =
 router.post('/unavailable-days', [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { date, reason } = req.body;
-    const unavailableDay = await UnavailableDay.create({ date, reason });
+    const salonId = req.user.salonId;
+
+    if (!salonId) {
+      return res.status(403).json({ message: "No tienes un salón asignado." });
+    }
+    const unavailableDay = await UnavailableDay.create({
+      date,
+      reason,
+      salonId,
+    });
     res.status(201).json({ message: 'Día no disponible agregado correctamente.', unavailableDay });
   } catch (error) {
     console.error(error);
@@ -94,11 +103,21 @@ router.post('/unavailable-days', [authenticateToken, isAdmin], async (req, res) 
 // Obtener todos los días no disponibles (solo para administradores)
 router.get('/unavailable-days', [authenticateToken, isAdmin], async (req, res) => {
   try {
-    const unavailableDays = await UnavailableDay.findAll();
+    const { salonId } = req.query; // Obtener el ID del salón desde la URL
+
+    let unavailableDays;
+    if (salonId) {
+      unavailableDays = await UnavailableDay.findAll({ where: { salonId } });
+    } else {
+      unavailableDays = await UnavailableDay.findAll(); // Si no se pasa `salonId`, devuelve todos
+    }
+
     res.status(200).json(unavailableDays);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al obtener los días no disponibles.' });
+    res
+      .status(500)
+      .json({ message: "Error al obtener los días no disponibles." });
   }
 });
 
@@ -122,7 +141,13 @@ router.delete('/unavailable-days/:id', [authenticateToken, isAdmin], async (req,
 router.post('/services', [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { name, description, price, duration } = req.body;
-    const service = await Service.create({ name, description, price, duration });
+    const salonId = req.user.salonId; // 🔥 Obtener el ID del salón del administrador
+
+    if (!salonId) {
+      return res.status(403).json({ message: "No tienes un salón asignado." });
+    }
+
+    const service = await Service.create({ name, description, price, duration, salonId });
     res.status(201).json({ message: 'Servicio creado exitosamente.', service });
   } catch (error) {
     console.error(error);
@@ -133,11 +158,19 @@ router.post('/services', [authenticateToken, isAdmin], async (req, res) => {
 // Obtener todos los servicios (accesible para usuarios autenticados)
 router.get('/services', [authenticateToken], async (req, res) => {
   try {
-    const services = await Service.findAll();
+    const { salonId } = req.query; // Obtener el ID del salón desde la URL
+
+    let services;
+    if (salonId) {
+      services = await Service.findAll({ where: { salonId } });
+    } else {
+      services = await Service.findAll(); // Si no se pasa `salonId`, devuelve todos
+    }
+
     res.status(200).json(services);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al obtener los servicios.' });
+    res.status(500).json({ message: "Error al obtener los servicios." });
   }
 });
 
