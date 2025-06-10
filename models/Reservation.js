@@ -20,7 +20,7 @@ const Reservation = sequelize.define(
     },
     barberId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: { model: Employee, key: "id" },
     }, // 🔥 Relación con Employee
     serviceId: {
@@ -39,5 +39,10 @@ const Reservation = sequelize.define(
     timestamps: true,
   }
 );
+
+Reservation.belongsTo(Employee, { foreignKey: "barberId", as: "barber" });
+Reservation.belongsTo(Service, { foreignKey: "serviceId", as: "service" });
+Reservation.belongsTo(Salon, { foreignKey: "salonId", as: "salon" });
+
 
 module.exports = Reservation;

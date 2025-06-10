@@ -3,38 +3,51 @@ const router = express.Router();
 const Reservation = require('../models/Reservation');
 const { authenticateToken } = require('../middleware/auth');
 const { sendConfirmationEmail } = require('../utils/email');
-const User = require('../models/User'); // Importa el modelo de usuario
+const User = require('../models/User');
+const Employee = require("../models/Employee"); 
+const Service = require("../models/Service");
+const Salon = require("../models/Salon");
 
 // Crear una nueva reserva
 router.post('/', authenticateToken, async (req, res) => {
   try {
+    console.log("Datos recibidos en la solicitud:", req.body); // Log de los datos recibidos
+    console.log("Usuario autenticado:", req.user); // Log del usuario autenticado
 
-    console.log('Datos recibidos en la solicitud:', req.body); // Log de los datos recibidos
-    console.log('Usuario autenticado:', req.user); // Log del usuario autenticado
-    
-    const { salonId, barber, service, date, time } = req.body;
+    const { salonId, barberId, serviceId, date, time } = req.body;
 
     // Crear la reserva
     const reservation = await Reservation.create({
       userId: req.user.userId,
       salonId,
-      barber,
-      service,
+      barberId,
+      serviceId,
       date,
       time,
-      status: 'pending',
+      status: "pending",
+    });
+
+    // Recargar la reserva con los datos completos antes de enviarla al correo
+    const fullReservation = await Reservation.findByPk(reservation.id, {
+      include: [
+        { model: Salon, as: "salon", attributes: ["id", "name", "location"] },
+        { model: Employee, as: "barber", attributes: ["id", "name"] },
+        { model: Service, as: "service", attributes: ["id", "name"] },
+      ],
     });
 
     // Obtener el correo del usuario
     const user = await User.findByPk(req.user.userId);
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
+      return res.status(404).json({ message: "Usuario no encontrado." });
     }
 
     // Enviar correo de confirmación
-    await sendConfirmationEmail(user.email, reservation);
+    await sendConfirmationEmail(user.email, fullReservation);
 
-    res.status(201).json({ message: 'Reserva creada exitosamente.', reservation });
+    res
+      .status(201)
+      .json({ message: "Reserva creada exitosamente.", reservation });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al crear la reserva.' });
@@ -42,14 +55,22 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Obtener todas las reservas del usuario autenticado
-router.get('/', authenticateToken, async (req, res) => {
+router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId; // Obtenido del middleware de autenticación
-    const reservations = await Reservation.findAll({ where: { userId } });
+
+    const reservations = await Reservation.findAll({
+      where: { userId },
+      include: [
+        { model: Employee, as: "barber", attributes: ["id", "name"] },
+        { model: Service, as: "service", attributes: ["id", "name"] },
+      ],
+    });
+
     res.status(200).json(reservations);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Error al obtener las reservas.' });
+    res.status(500).json({ message: "Error al obtener las reservas." });
   }
 });
 

@@ -68,7 +68,7 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role, salonId: user.salonId },
       JWT_SECRET,
-      { expiresIn: "1h" }
+      { expiresIn: "78h" }
     );
     res.status(200).json({ message: "Inicio de sesión exitoso.", token });
   } catch (error) {

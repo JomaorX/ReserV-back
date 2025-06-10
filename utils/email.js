@@ -1,33 +1,61 @@
-const nodemailer = require('nodemailer');
+const fs = require("fs");
+const path = require("path");
+const nodemailer = require("nodemailer");
 
-// Configuración del transporte de correo
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // Puedes usar otros servicios como Outlook, etc.
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // Tu correo electrónico
-    pass: process.env.EMAIL_PASSWORD, // Tu contraseña o app password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
-// Función para enviar correos
 const sendConfirmationEmail = async (to, reservation) => {
+  // Leer la plantilla del correo
+  const templatePath = path.join(__dirname, "templates/emailTemplate.html");
+  let emailTemplate = fs.readFileSync(templatePath, "utf8");
+
+  // Reemplazar placeholders con los datos reales
+  emailTemplate = emailTemplate
+    .replace(
+      "{{salonName}}",
+      reservation.salon ? reservation.salon.name : "No especificado"
+    )
+    .replace(
+      "{{salonLocation}}",
+      reservation.salon ? reservation.salon.location : "No especificado"
+    )
+    .replace(
+      "{{barberName}}",
+      reservation.barber ? reservation.barber.name : "No especificado"
+    )
+    .replace(
+      "{{serviceName}}",
+      reservation.service ? reservation.service.name : "No especificado"
+    )
+    .replace("{{date}}", reservation.date)
+    .replace(
+      "{{time}}",
+      new Date(reservation.time).toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+    );
+
+  // Configuración del correo
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: 'reserv.platform@gmail.com', // Dirección fija para pruebas
-    replyTo: process.env.EMAIL_USER,
-    subject: 'Confirmación de Reserva',
-    text: `Tu reserva ha sido creada exitosamente:\n\n` +
-      `Peluquero: ${reservation.barber}\n` +
-      `Servicio: ${reservation.service}\n` +
-      `Fecha: ${reservation.date}\n` +
-      `Hora: ${reservation.time}`,
+    to,
+    subject: "Confirmación de Reserva",
+    html: emailTemplate,
   };
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log('Correo de confirmación enviado.');
+    console.log("Correo de confirmación enviado.");
   } catch (error) {
-    console.error('Error al enviar el correo:', error);
+    console.error("Error al enviar el correo:", error);
   }
 };
 
