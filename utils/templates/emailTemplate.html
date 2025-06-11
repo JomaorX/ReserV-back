@@ -1,24 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
+  <meta charset="UTF-8">
+  <title>Reserva Confirmada</title>
   <style>
-    body { font-family: Arial, sans-serif; color: #333; padding: 20px; }
-    .container { border: 1px solid #ddd; border-radius: 10px; padding: 20px; }
-    h2 { color: #4CAF50; }
-    .info { margin-bottom: 10px; }
-    .footer { margin-top: 20px; font-size: 14px; color: #777; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f7f7f7;
+      padding: 0;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .content {
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #111;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+      margin: 10px 0;
+    }
+
+    .highlight-box {
+      background: #f1f1f1;
+      padding: 20px;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #2ecc71;
+      margin: 20px 0;
+    }
+
+    .btn {
+      background-color: #08bfcc;
+      color: white;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      display: inline-block;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .footer {
+      padding: 20px;
+      font-size: 14px;
+      text-align: center;
+      color: #888;
+    }
+
+    .steps {
+      text-align: left;
+      padding: 0 30px 30px 30px;
+    }
+
+    .steps h3 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .steps p {
+      font-size: 15px;
+      margin: 6px 0;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Confirmación de Reserva</h2>
-    <p class="info"><strong>Salón:</strong> {{salonName}}</p>
-    <p class="info"><strong>Dirección:</strong> {{salonLocation}}</p>
-    <p class="info"><strong>Peluquero:</strong> {{barberName}}</p>
-    <p class="info"><strong>Servicio:</strong> {{serviceName}}</p>
-    <p class="info"><strong>Fecha:</strong> {{date}}</p>
-    <p class="info"><strong>Hora:</strong> {{time}}</p>
-    <p class="footer">Gracias por reservar con nosotros. ¡Nos vemos pronto!</p>
+    <img src="https://i.imgur.com/jONsYSn.png" alt="Reserva confirmada" class="header-image">
+
+    <div class="content">
+      <h1>¡Tu cita ha sido confirmada! 💇‍♂️</h1>
+      <p>Gracias por reservar con <strong>{{salonName}}</strong>.</p>
+
+      <div class="highlight-box">
+        📅 {{date}} a las {{time}}<br>
+        ✂️ {{barberName}} - {{serviceName}}
+      </div>
+
+      <a href="{{linkToViewReservation}}" class="btn">Ver mi cita</a>
+    </div>
+
+    <div class="steps">
+      <h3>¿Qué hacer ahora?</h3>
+      <p>✔ Llega 5 minutos antes a <strong>{{salonLocation}}</strong>.</p>
+      <p>✔ Si no puedes asistir, cancela con antelación.</p>
+      <p>✔ ¡Disfruta de tu experiencia en el salón!</p>
+    </div>
+
+    <div class="footer">
+      Este es un mensaje automático. No respondas a este correo.<br>
+      © 2025 Reserv. Todos los derechos reservados.
+    </div>
   </div>
 </body>
 </html>
