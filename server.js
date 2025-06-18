@@ -57,6 +57,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 app.post('/api/login', async (req, res) => {
+  console.log("Login request received");
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
@@ -164,9 +165,12 @@ app.post('/api/salons', authenticateToken, async (req, res) => {
       JWT_SECRET,
       { expiresIn: "78h" }
     );
-    res
-      .status(201)
-      .json({ message: "Salón creado con éxito", salon: newSalon });
+    res.status(201).json({
+      message: "Salón creado con éxito",
+      salon: newSalon,
+      token: updatedToken, // ✅ Incluir el nuevo token en la respuesta
+    });
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al crear el salón' });
@@ -184,7 +188,11 @@ app.put('/api/salons/:id', authenticateToken, async (req, res) => {
       { salonId: salon.id },
       { where: { id: req.user.userId } }
     );
-    res.json({ message: 'Salón actualizado con éxito', salon });
+    res.json({
+      message: "Salón actualizado con éxito",
+      salon
+    });
+    
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error al actualizar el salón' });
@@ -209,7 +217,7 @@ app.listen(PORT, async () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
   try {
     await sequelize.sync({
-      alter: true, // Actualiza el esquema sin borrar datos // {force: true}, borra todo y la deja limpia
+      //force: true, // Actualiza el esquema sin borrar datos // {force: true}, borra todo y la deja limpia, y si no con alter: true que solo te actializa las cosas nuevas de los modelos sin borrar datos
       logging: console.log, // Opcional: Ver qué cambios hace
     });
     console.log('Base de datos sincronizada.');

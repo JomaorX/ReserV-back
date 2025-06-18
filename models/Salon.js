@@ -22,7 +22,7 @@ const Salon = sequelize.define('Salon', {
     type: DataTypes.STRING,
     allowNull: true,
     defaultValue: null,
-  }
+  },
 }, {
   timestamps: true,
 });

@@ -22,6 +22,8 @@ const Reservation = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: { model: Employee, key: "id" },
+      onDelete: "SET NULL",
+      onUpdate: "CASCADE",
     }, // 🔥 Relación con Employee
     serviceId: {
       type: DataTypes.INTEGER,
