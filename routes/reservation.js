@@ -121,4 +121,25 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Obtener todas las reservas de una peluqueria
+router.get("/reservations", authenticateToken, async (req, res) => {
+  try {
+    const salonId = req.user.salonId;
+
+    const reservations = await Reservation.findAll({
+      where: { salonId },
+      include: [
+        { model: Employee, as: "barber", attributes: ["id", "name"] },
+        { model: Service, as: "service", attributes: ["id", "name"] },
+        { model: User, as: "user", attributes: ["id", "name"] } 
+      ],
+    });
+
+    res.status(200).json(reservations);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener las reservas." });
+  }
+});
+
 module.exports = router;

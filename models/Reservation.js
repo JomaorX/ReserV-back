@@ -45,6 +45,7 @@ const Reservation = sequelize.define(
 Reservation.belongsTo(Employee, { foreignKey: "barberId", as: "barber" });
 Reservation.belongsTo(Service, { foreignKey: "serviceId", as: "service" });
 Reservation.belongsTo(Salon, { foreignKey: "salonId", as: "salon" });
+Reservation.belongsTo(User, { foreignKey: "userId", as: "user" });
 
 
 module.exports = Reservation;
