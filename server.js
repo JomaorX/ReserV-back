@@ -204,7 +204,7 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No se ha subido ningún archivo' });
   }
-  const imageUrl = `http://localhost:${PORT}/uploads/${req.file.filename}`;
+  const imageUrl = `/uploads/${req.file.filename}`;
   res.json({ imageUrl });
 });
 
