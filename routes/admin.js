@@ -278,7 +278,7 @@ router.put('/salons/:id', [authenticateToken, isAdmin], async (req, res) => {
   console.log("🚨 Se llamó a PUT /salons");
   try {
     const { id } = req.params;
-    const { name, location, openingHours } = req.body;
+    const { name, location, openingHours, bannerUrl } = req.body;
 
     console.log("🔍 Buscando salón con ID:", id);
 
@@ -295,7 +295,7 @@ router.put('/salons/:id', [authenticateToken, isAdmin], async (req, res) => {
 
     console.log("✏️ Actualizando salón con nuevos datos");
 
-    await salon.update({ name, location, openingHours });
+    await salon.update({ name, location, openingHours, bannerUrl });
 
     console.log(
       "🔄 Actualizando salonId del usuario a:",
