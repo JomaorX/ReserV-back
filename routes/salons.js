@@ -1,128 +1,153 @@
+const express = require("express");
+const router = express.Router();
+const jwt = require("jsonwebtoken");
+const { Salon, User } = require("../models"); // Ajusta el path si es necesario
+const JWT_SECRET = process.env.JWT_SECRET;
 
-// Crear un nuevo salón (solo para administradores)
-router.post('/salons', [authenticateToken, isAdmin], async (req, res) => {
+
+
+
+// ---------- MIDDLEWARES ----------
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token)
+    return res.status(401).json({ message: "Token no proporcionado." });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ message: "Token inválido o expirado." });
+    req.user = user;
+    next();
+  });
+};
+
+const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin')
+    return res.status(403).json({ message: "Acceso restringido a administradores." });
+  next();
+};
+
+// Obtener el salón del administrador autenticado
+router.get("/me", [authenticateToken, isAdmin], async (req, res) => {
   try {
-    const { name, location, openingHours } = req.body;
+    const salon = await Salon.findOne({ where: { ownerId: req.user.userId } });
+    if (!salon) {
+      return res.status(404).json({ message: "Salón no encontrado." });
+    }
+    res.status(200).json(salon);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener el salón." });
+  }
+});
 
-    console.log("🛠️ Creando nuevo salón para usuario:", req.user.userId);
-    
+// ---------- CREAR SALÓN ----------
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { name, location, openingHours, bannerUrl } = req.body;
+
     const newSalon = await Salon.create({
       ownerId: req.user.userId,
       name,
       location,
       openingHours,
+      bannerUrl,
     });
-    
-    console.log("✅ Salón creado con ID:", newSalon.id);
 
     await User.update(
       { salonId: newSalon.id },
-      { where: { id: req.user.userId }, individualHooks: true }
+      { where: { id: req.user.userId } }
     );
-
-    console.log("🔄 Usuario actualizado con nuevo salonId");
 
     const updatedUser = await User.findByPk(req.user.userId);
-    console.log(
-      "🧾 Verificación - salonId del usuario en BD:",
-      updatedUser ? updatedUser.salonId : "Usuario no encontrado"
-    );
 
-    res.status(201).json({ message: 'Salón creado exitosamente.', salon: newSalon });
+    const updatedToken = jwt.sign({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      salonId: updatedUser.salonId
+    }, JWT_SECRET, { expiresIn: "78h" });
 
+    res.status(201).json({ message: "Salón creado con éxito", salon: newSalon, token: updatedToken });
   } catch (error) {
     console.error("❌ Error al crear salón:", error);
-    res.status(500).json({ message: 'Error al crear el salón.' });
+    res.status(500).json({ message: "Error al crear el salón" });
   }
 });
 
-
-// Obtener todos los salones (accesible para usuarios autenticados)
-router.get('/salons', [authenticateToken], async (req, res) => {
+// ---------- ACTUALIZAR SALÓN ----------
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
-    const salons = await Salon.findAll();
-    if (!salons || salons.length === 0) {
-      return res.status(404).json({ message: 'No hay salones registrados.' });
-    }
-    res.status(200).json(salons);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener los salones.' });
-  }
-});
+    const salon = await Salon.findOne({
+      where: { id: req.params.id, ownerId: req.user.userId }
+    });
 
-// Obtener el salón del administrador autenticado
-router.get('/salons/me', [authenticateToken, isAdmin], async (req, res) => {
-  try {
-    const salon = await Salon.findOne({ where: { ownerId: req.user.userId } });
-    if (!salon) {
-      return res.status(404).json({ message: 'Salón no encontrado.' });
-    }
-    res.status(200).json(salon);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Error al obtener el salón.' });
-  }
-});
+    if (!salon)
+      return res.status(404).json({ message: "Salón no encontrado." });
 
-// Actualizar un salón (solo para administradores)
-router.put('/salons/:id', [authenticateToken, isAdmin], async (req, res) => {
-  console.log("🚨 Se llamó a PUT /salons");
-  try {
-    const { id } = req.params;
     const { name, location, openingHours, bannerUrl } = req.body;
-    
-    console.log("🔍 Buscando salón con ID:", id);
-    
-    const salon = await Salon.findByPk(id);
-    if (!salon) {
-      console.log("❌ Salón no encontrado");
-      return res.status(404).json({ message: 'Salón no encontrado.' });
-    }
-
-    if (salon.ownerId !== req.user.userId) {
-      console.log("⛔ Intento de modificación no autorizado por userId:", req.user.userId);
-      return res.status(403).json({ message: 'No tienes permiso para modificar este salón.' });
-    }
-
-    console.log("✏️ Actualizando salón con nuevos datos");
-
     await salon.update({ name, location, openingHours, bannerUrl });
-
-    console.log(
-      "🔄 Actualizando salonId del usuario a:",
-      salon.id
-    );
 
     await User.update(
       { salonId: salon.id },
-      { where: { id: req.user.userId }, individualHooks: true }
+      { where: { id: req.user.userId } }
     );
 
-    const updatedUser = await User.findByPk(req.user.userId);
-    console.log(
-      "🧾 Verificación - salonId del usuario en BD:",
-      updatedUser ? updatedUser.salonId : "Usuario no encontrado"
-    );
-    
-    res.status(200).json({ message: 'Salón actualizado correctamente.', salon });
-    
+    res.json({ message: "Salón actualizado con éxito", salon });
   } catch (error) {
     console.error("❌ Error al actualizar salón:", error);
-    res.status(500).json({ message: 'Error al actualizar el salón.' });
+    res.status(500).json({ message: "Error al actualizar el salón" });
   }
 });
 
-// GET /api/salons/:id - Obtener un salón por ID
+// ---------- OBTENER TU SALÓN ----------
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const salon = await Salon.findOne({ where: { ownerId: req.user.userId } });
+    if (!salon)
+      return res.status(404).json({ message: "No tienes salón aún." });
+
+    res.json(salon);
+  } catch (error) {
+    console.error("❌ Error al obtener salón:", error);
+    res.status(500).json({ message: "Error al obtener el salón" });
+  }
+});
+
+// ---------- LISTAR TODOS LOS SALONES O UNO POR ID ----------
+router.get('/', async (req, res) => {
+  try {
+    const { salonId } = req.query;
+    let salons;
+
+    if (salonId) {
+      salons = await Salon.findAll({ where: { id: salonId } });
+    } else {
+      salons = await Salon.findAll({
+        attributes: ["id", "name", "openingHours", "bannerUrl"]
+      });
+    }
+
+    res.json(salons);
+  } catch (error) {
+    console.error("❌ Error al obtener salones:", error);
+    res.status(500).json({ message: "Error al obtener los salones" });
+  }
+});
+
+// ---------- OBTENER SALÓN POR ID ----------
 router.get('/:id', async (req, res) => {
   try {
     const salon = await Salon.findByPk(req.params.id);
-    if (!salon) {
-      return res.status(404).json({ message: 'Salón no encontrado' });
-    }
+    if (!salon)
+      return res.status(404).json({ message: "Salón no encontrado" });
+
     res.json(salon);
   } catch (error) {
-    console.error('Error al obtener salón:', error);
-    res.status(500).json({ message: 'Error del servidor' });
+    console.error("❌ Error al obtener salón:", error);
+    res.status(500).json({ message: "Error del servidor" });
   }
 });
+
+module.exports = router;
