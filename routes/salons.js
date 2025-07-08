@@ -32,7 +32,7 @@ const isAdmin = (req, res, next) => {
 module.exports = router;
 
 // ---------- GET SALÓN ACTUAL DEL USUARIO ----------
-app.get("/me", [authenticateToken, isAdmin], async (req, res) => {
+router.get("/me", [authenticateToken, isAdmin], async (req, res) => {
   try {
     const salon = await Salon.findOne({ where: { ownerId: req.user.userId } });
     if (!salon)
@@ -45,7 +45,7 @@ app.get("/me", [authenticateToken, isAdmin], async (req, res) => {
 });
 
 // ---------- LISTAR TODOS LOS SALONES (para clientes) ----------
-app.get('/',[authenticateToken], async (req, res) => {
+router.get('/',[authenticateToken], async (req, res) => {
   try {
     const { salonId } = req.query;
     console.log("Salon recibido",salonId);
@@ -65,7 +65,7 @@ app.get('/',[authenticateToken], async (req, res) => {
 });
 
 // ---------- OBTENER UN SALÓN POR ID ----------
-app.get('/:id',[authenticateToken], async (req, res) => {
+router.get('/:id',[authenticateToken], async (req, res) => {
   try {
     const salon = await Salon.findByPk(req.params.id);
     if (!salon) {
@@ -79,7 +79,7 @@ app.get('/:id',[authenticateToken], async (req, res) => {
 });
 
 // ---------- CREAR SALÓN ----------
-app.post("/", [authenticateToken, isAdmin], async (req, res) => {
+router.post("/", [authenticateToken, isAdmin], async (req, res) => {
   try {
     const { name, location, openingHours, bannerUrl } = req.body;
     const newSalon = await Salon.create({
@@ -119,7 +119,7 @@ app.post("/", [authenticateToken, isAdmin], async (req, res) => {
 });
 
 // ---------- ACTUALIZAR SALÓN ----------
-app.put("/:id", [authenticateToken, isAdmin], async (req, res) => {
+router.put("/:id", [authenticateToken, isAdmin], async (req, res) => {
   try {
     const salon = await Salon.findOne({
       where: { id: req.params.id, ownerId: req.user.userId },
